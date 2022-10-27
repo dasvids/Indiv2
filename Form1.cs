@@ -24,71 +24,69 @@ namespace Indiv2
             color = Color.Black;
             pen = new Pen(color);
         }
-        //lowest point (max coorinates point of picturebox)
+        //lowest point
         Point p0 = new Point();
         
-        //points by user's clicks
+        //points by user's clicks  
         List<Point> points = new List<Point>();      
         
-        //iteration
-        int iter = 0; 
+        int iter = 0; //counter for Graham
         private void pictureBox1_MouseClick(object sender, MouseEventArgs e)
         {
-            //Draw point
-            g.FillEllipse(Brushes.Red, e.X - 3, e.Y - 3, 6, 6);
-            //adding point to list 
-            points.Add(e.Location);
-            //increase iteration 
-            iter++; 
-            //updationg changes 
+            g.FillEllipse(Brushes.Red, e.X - 3, e.Y - 3, 6, 6); //drawing point
+            points.Add(e.Location);  //adding point to list 
+            iter++; //increase iteration 
             pictureBox1.Invalidate();
-            //if points 3 or more doing graham scan
-            if (iter >= 3 && checkBox1.Checked) 
+
+            if (iter >= 3 && checkBox1.Checked) //working only if 3 or more points
             {
-                //result of Graham Scan
                 List<Point> S = Graham(points); 
-                //drawing polygon by points, selected by graham scan
                 g.FillPolygon(Brushes.Thistle, S.ToArray());
-                //drawing points again, to overlay polygon
-                points.ForEach(p => g.FillEllipse(Brushes.Red, p.X - 3, p.Y - 3, 6, 6)); 
+                points.ForEach(p => g.FillEllipse(Brushes.Red, p.X - 3, p.Y - 3, 6, 6)); //drawing points again, to overlay polygon
             }
         }
-        // 0 if clockwise turn, 1 if counter-otherwise
+
+        //true if clockwise turn or collinear , false if counter-otherwise
         private static bool ccw(Point a, Point b, Point c) 
         {
             //return ((b.X - a.X) * (c.Y - a.Y)) > ((b.Y - a.Y) * (c.X - a.X));
-            return ((b.X - a.X) * (c.Y - a.Y)) > ((b.Y - a.Y) * (c.X - a.X));
+            return ((b.X - a.X) * (c.Y - a.Y)) >= ((b.Y - a.Y) * (c.X - a.X));
         }
+
         List<Point> Graham(List<Point> G) //Graham scan
         {
             //p0 is min point by y and max by x
-            p0 = G.OrderByDescending(p => p.Y).ThenByDescending(p => p.X).First(); // min point is max of picture box height abd width          
-            //groupby by polar angle relative p0 (sorting)
-            List<Point> P = G.Where(p => p != p0).OrderBy(x => alpha(x)).ToList();
-            // stack of final points 
+            p0 = G.OrderByDescending(p => p.Y).ThenByDescending(p => p.X).First(); // min point is max of picture box height abd width                       
+            //groupby by polar angle relative p0
+            //List<Point> P = G.Where(p => p != p0).OrderBy(x => alpha(x)).ToList();
+
             Stack<Point> stack = new Stack<Point>();
-            //inserting min point
+
             stack.Push(p0);
-            P.ForEach(p =>
+
+            //loop for sorted points by polar angle
+            G.Where(p => p != p0).OrderBy(x => alpha(x)).ToList().ForEach(p =>
             {
-                while (stack.Count > 1 && ccw(next_to_top(stack), top(stack), p))
-                {
+                while (stack.Count > 1 && ccw(next_to_top(stack), top(stack), p)) //going back if clockwise
                     stack.Pop();
-                }
                 stack.Push(p);
             });
-            return stack.ToList();
+
+            return stack.ToList();       
         }
 
         private Point next_to_top(Stack<Point> stack)
         {
             Point p = stack.Pop();
+            //stack.Pop();
             Point next = stack.Pop();
+            //stack.Pop();
             stack.Push(next);
             stack.Push(p);
             return next;
         }
       
+
         private Point top(Stack<Point> stack)
         {
             Point p = stack.Pop();
