@@ -7,6 +7,7 @@ using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
 using System.Windows.Forms;
+using static System.Windows.Forms.VisualStyles.VisualStyleElement.Button;
 
 namespace Indiv2
 {
@@ -28,20 +29,36 @@ namespace Indiv2
         Point p0 = new Point();
         
         //points by user's clicks  
-        List<Point> points = new List<Point>();      
-        
+        List<Point> points = new List<Point>();
+
+        List<Point> G = new List<Point>();
+
+
         int iter = 0; //counter for Graham
         private void pictureBox1_MouseClick(object sender, MouseEventArgs e)
         {
             g.FillEllipse(Brushes.Red, e.X - 3, e.Y - 3, 6, 6); //drawing point
             points.Add(e.Location);  //adding point to list 
+
+            //
+            p0 = (e.Location.X > p0.X && e.Location.X > p0.Y) || iter == 0 ? e.Location : p0;
+
             iter++; //increase iteration 
             pictureBox1.Invalidate();
 
             if (iter >= 3 && checkBox1.Checked) //working only if 3 or more points
             {
-                List<Point> S = Graham(points); 
-                g.FillPolygon(Brushes.Thistle, S.ToArray());
+                G = Graham(points);
+                if (checkBox2.Checked)
+                {
+                    g.Clear(pictureBox1.BackColor);
+                    g.FillPolygon(Brushes.Thistle, G.ToArray());
+                }
+                else
+                {
+                    g.Clear(pictureBox1.BackColor);
+                    g.DrawPolygon(Pens.Thistle, G.ToArray()); 
+                }
                 points.ForEach(p => g.FillEllipse(Brushes.Red, p.X - 3, p.Y - 3, 6, 6)); //drawing points again, to overlay polygon
             }
         }
@@ -56,18 +73,19 @@ namespace Indiv2
         List<Point> Graham(List<Point> G) //Graham scan
         {
             //p0 is min point by y and max by x
-            p0 = G.OrderByDescending(p => p.Y).ThenByDescending(p => p.X).First(); // min point is max of picture box height abd width                       
+            //p0 = G.OrderByDescending(p => p.Y).ThenByDescending(p => p.X).First(); // min point is max of picture box height abd width                       
             //groupby by polar angle relative p0
             //List<Point> P = G.Where(p => p != p0).OrderBy(x => alpha(x)).ToList();
 
             Stack<Point> stack = new Stack<Point>();
-
+            
+            // adding min point to stack
             stack.Push(p0);
 
             //loop for sorted points by polar angle
             G.Where(p => p != p0).OrderBy(x => alpha(x)).ToList().ForEach(p =>
             {
-                while (stack.Count > 1 && ccw(next_to_top(stack), top(stack), p)) //going back if clockwise
+                while (stack.Count > 1 && ccw(next_to_top(stack), top(stack), p)) //going back if clockwise or collinear
                     stack.Pop();
                 stack.Push(p);
             });
@@ -104,8 +122,12 @@ namespace Indiv2
         {
             if (points.Count >= 3) //working only if 3 or more points
             {
-                List<Point> S = Graham(points);
-                g.FillPolygon(Brushes.Thistle, S.ToArray());
+                G = Graham(points);
+                //g.FillPolygon(Brushes.Thistle, S.ToArray());
+                g.Clear(pictureBox1.BackColor);
+                if (checkBox2.Checked)
+                    g.FillPolygon(Brushes.Thistle, G.ToArray());
+                else g.DrawPolygon(Pens.Thistle, G.ToArray());
                 points.ForEach(p => g.FillEllipse(Brushes.Red, p.X - 3, p.Y - 3, 6, 6)); //drawing points again, to overlay polygon
             }
             pictureBox1.Invalidate();
@@ -117,11 +139,6 @@ namespace Indiv2
             g.Clear(pictureBox1.BackColor);
             pictureBox1.Invalidate();
             iter = 0;
-        }
-
-        private void checkBox1_CheckedChanged(object sender, EventArgs e)
-        {
-
         }
     }
 }
