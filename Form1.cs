@@ -41,12 +41,21 @@ namespace Indiv2
             points.Add(e.Location);  //adding point to list 
 
             //
-            p0 = (e.Location.X > p0.X && e.Location.X > p0.Y) || iter == 0 ? e.Location : p0;
+            //p0 = (e.Location.X >= p0.X && e.Location.X >= p0.Y) || iter == 0 ? e.Location : p0;
+            /*if (iter == 0)
+            {
+                p0 = e.Location;
+            }
+            else if (e.Location.X > p0.X && e.Location.X > p0.Y)
+            {
+                p0 = e.Location;
+            }*/
+           
 
             iter++; //increase iteration 
             pictureBox1.Invalidate();
 
-            if (iter >= 3 && checkBox1.Checked) //working only if 3 or more points
+            if (iter >= 3 && checkBox1.Checked /*&& points.Distinct().Skip(1).Any()*/) //working only if 3 or more points
             {
                 G = Graham(points);
                 if (checkBox2.Checked)
@@ -73,7 +82,7 @@ namespace Indiv2
         List<Point> Graham(List<Point> G) //Graham scan
         {
             //p0 is min point by y and max by x
-            //p0 = G.OrderByDescending(p => p.Y).ThenByDescending(p => p.X).First(); // min point is max of picture box height abd width                       
+            p0 = G.OrderByDescending(p => p.Y).ThenByDescending(p => p.X).First(); // min point is max of picture box height abd width                       
             //groupby by polar angle relative p0
             //List<Point> P = G.Where(p => p != p0).OrderBy(x => alpha(x)).ToList();
 
@@ -120,7 +129,7 @@ namespace Indiv2
 
         private void button1_Click(object sender, EventArgs e)
         {
-            if (points.Count >= 3) //working only if 3 or more points
+            if (points.Count >= 3 /*&& points.Distinct().Skip(1).Any()*/) //working only if 3 or more points
             {
                 G = Graham(points);
                 //g.FillPolygon(Brushes.Thistle, S.ToArray());
