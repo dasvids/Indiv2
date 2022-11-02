@@ -44,7 +44,7 @@ namespace Indiv2
                 g.FillEllipse(Brushes.Red, e.X - 3, e.Y - 3, 6, 6); //drawing point
 
                 points.Add(e.Location);  //adding point to list 
-
+                PointsCount.Text = (int.Parse(PointsCount.Text) + 1).ToString();
 
                 p0 = IsNewMin(e.Location) ? e.Location : p0;
 
@@ -54,7 +54,7 @@ namespace Indiv2
                 if (iter >= 3 && checkBox1.Checked && points.Distinct().Count() != 1) //working only if 3 or more points
                 {
                     G = Graham(points);
-                    Draw(G);
+                    Draw(G);                   
                 }
             }
         }
@@ -81,15 +81,12 @@ namespace Indiv2
         }*/
 
         //true if clockwise turn or collinear , false if counter-otherwise
-        private static bool ccw(Point a, Point b, Point c)
-        {
-            return ((b.X - a.X) * (c.Y - a.Y)) >= ((b.Y - a.Y) * (c.X - a.X));
-        }
+        private static bool ccw(Point a, Point b, Point c) => ((b.X - a.X) * (c.Y - a.Y)) >= ((b.Y - a.Y) * (c.X - a.X));
 
         List<Point> Graham(List<Point> G) //Graham scan
         {
             //p0 is min point by y and max by x
-            if (IsMouseDown)
+            if (IsMouseDown || checkBox1.Checked || PlaceCountBox.Text != null)
                 p0 = G.OrderByDescending(p => p.Y).ThenByDescending(p => p.X).First(); // min point is max of picture box height abd width                       
             //groupby by polar angle relative p0
             //List<Point> P = G.Where(p => p != p0).OrderBy(x => alpha(x)).ToList();
@@ -99,6 +96,8 @@ namespace Indiv2
             // adding min point to stack
             stack.Push(p0);
 
+
+
             //loop for sorted points by polar angle
             G.Where(p => p != p0).OrderBy(p => alpha(p)).ToList().ForEach(p =>
             {
@@ -106,7 +105,7 @@ namespace Indiv2
                     stack.Pop();
                 stack.Push(p);
             });
-
+            HullCount.Text = stack.Count.ToString();
             return stack.ToList();
         }
 
@@ -152,9 +151,12 @@ namespace Indiv2
         private void button2_Click(object sender, EventArgs e)
         {
             points.Clear();
+            //G.Clear();
             g.Clear(pictureBox1.BackColor);
             pictureBox1.Invalidate();
             iter = 0;
+            HullCount.Text = 0.ToString();
+            PointsCount.Text = 0.ToString();
         }
 
         private bool IsMouseDown = false;
@@ -164,28 +166,28 @@ namespace Indiv2
         private bool DontPutNextPoint = false;
         private void pictureBox1_MouseDown(object sender, MouseEventArgs e)
         {
-           if (e.Button == MouseButtons.Right && points.Count >0)
-           {
+            if (e.Button == MouseButtons.Right && points.Count > 0)
+            {
                 MoveInd = points.FindIndex(p => PointIsNear(p, e.Location));
                 IsMouseDown = MoveInd != -1 ? true : false;
-           }
+            }
 
-           /*if (e.Button == MouseButtons.Left)
-           {
-                AreaSelect = true;
-                RectSelect.Item1 = e.Location;
-                DontPutNextPoint = true;
-           }*/
+            /*if (e.Button == MouseButtons.Left)
+            {
+                 AreaSelect = true;
+                 RectSelect.Item1 = e.Location;
+                 DontPutNextPoint = true;
+            }*/
         }
 
         bool PointIsNear(Point p0, Point e)
         {
-            return (Math.Abs(p0.X - e.X) <4  && Math.Abs(p0.Y - e.Y) <4  );
+            return (Math.Abs(p0.X - e.X) < 4 && Math.Abs(p0.Y - e.Y) < 4);
         }
 
         private void pictureBox1_MouseUp(object sender, MouseEventArgs e)
         {
-           
+
             IsMouseDown = false;
             AreaSelect = false;
         }
@@ -194,17 +196,48 @@ namespace Indiv2
         {
             if (IsMouseDown)
             {
-                points[MoveInd] = e.Location;
+                points[MoveInd] = e.Location;               
                 G = Graham(points);
                 Draw(G);
+                
+               
+
+                /*if (AreaSelect)
+                {
+                    g.Clear(pictureBox1.BackColor);
+                    RectSelect.Item2 = e.Location;
+                    g.FillRectangle(Brushes.AliceBlue, RectSelect.Item1.X, RectSelect.Item1.Y, -(RectSelect.Item1.X - RectSelect.Item2.X), -(RectSelect.Item1.Y - RectSelect.Item2.Y));
+                    pictureBox1.Invalidate();
+                }*/
             }
-            /*if (AreaSelect)
+        }
+        Random rand = new Random();
+        //Random Yrand = new Random();
+        private void button3_Click(object sender, EventArgs e)
+        {
+            //int PlaceCnt = int.Parse(PlaceCountBox.Text);
+            if (int.TryParse(PlaceCountBox.Text, out int PlaceCnt))
             {
-                g.Clear(pictureBox1.BackColor);
-                RectSelect.Item2 = e.Location;
-                g.FillRectangle(Brushes.AliceBlue, RectSelect.Item1.X, RectSelect.Item1.Y, -(RectSelect.Item1.X - RectSelect.Item2.X), -(RectSelect.Item1.Y - RectSelect.Item2.Y));
+                //PlaceCnt = PlaceCnt < 0 ? Math.Abs(PlaceCnt) : PlaceCnt;
+                PlaceCnt = PlaceCnt > 1000 ? 1000 : Math.Abs(PlaceCnt);
+                PlaceCountBox.Text = PlaceCnt.ToString();
+                for (int i = 0; i < PlaceCnt; i++)
+                {
+                    int xrnd = rand.Next(10, pictureBox1.Width - 10);
+                    int yrnd = rand.Next(10, pictureBox1.Height - 10);
+                    Point rndPoint = new Point(xrnd, yrnd);
+                    points.Add(rndPoint);
+                    g.FillEllipse(Brushes.Red, rndPoint.X - 3, rndPoint.Y - 3, 6, 6);
+                    //p0 = IsNewMin(rndPoint) ? rndPoint : p0;
+                }
+                PointsCount.Text = (int.Parse(PointsCount.Text) + PlaceCnt).ToString();
+                if (checkBox1.Checked && points.Count >= 3)
+                {
+                    G = Graham(points);
+                    Draw(G);
+                }
                 pictureBox1.Invalidate();
-            }*/
+            }
         }
     }
 }
