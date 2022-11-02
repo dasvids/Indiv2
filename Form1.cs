@@ -149,7 +149,11 @@ namespace Indiv2
             DrawPoints(points);
             pictureBox1.Invalidate();
         }
-        private void DrawPoints(List<Point> lp) => lp.ForEach(p => g.FillEllipse(Brushes.Red, p.X - 3, p.Y - 3, 6, 6));
+        private void DrawPoints(List<Point> lp) 
+        { 
+            lp.ForEach(p => g.FillEllipse(Brushes.Red, p.X - 3, p.Y - 3, 6, 6));
+            pictureBox1.Invalidate();
+        }
 
         private void button2_Click(object sender, EventArgs e)
         {
@@ -198,7 +202,7 @@ namespace Indiv2
                 int x = e.X > pictureBox1.Width ? pictureBox1.Width-3 : e.X < 0 ? 0 : e.X;
                 int y = e.Y > pictureBox1.Height ? pictureBox1.Height-3 : e.Y < 0 ? 0 : e.Y;
                 points[MoveInd] = new Point(x, y);
-                if (G.Count !=0)
+                if (G.Count >2)
                 {
                     G = Graham(points);
                     Draw(G);
@@ -207,7 +211,6 @@ namespace Indiv2
                 {
                     g.Clear(pictureBox1.BackColor);
                     DrawPoints(points);
-                    pictureBox1.Invalidate();
                 }
                 
 
@@ -249,7 +252,37 @@ namespace Indiv2
                     G = Graham(points);
                     Draw(G);
                 }
-                pictureBox1.Invalidate();
+                //pictureBox1.Invalidate();
+            }
+        }
+
+        private void pictureBox1_MouseDoubleClick(object sender, MouseEventArgs e)
+        {
+            if (e.Button == MouseButtons.Right)
+            {
+                int DeleteId = points.FindIndex(p => PointIsNear(p, e.Location));
+                int DeleteHullId = G.FindIndex(h => PointIsNear(h, e.Location));
+                
+                if (DeleteHullId != -1)
+                {
+                    G.RemoveAt(DeleteHullId);                   
+                }
+                if (DeleteId != -1)
+                {
+                    points.RemoveAt(DeleteId);
+                    PointsCount.Text = points.Count.ToString();
+                }
+
+                if (G.Count > 2)
+                {
+                    G = Graham(points);
+                    Draw(G);
+                }
+                else
+                {
+                    g.Clear(pictureBox1.BackColor);
+                    DrawPoints(points);
+                }
             }
         }
     }
