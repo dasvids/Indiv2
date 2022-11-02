@@ -3,6 +3,7 @@ using System.Collections.Generic;
 using System.ComponentModel;
 using System.Data;
 using System.Drawing;
+using System.Drawing.Drawing2D;
 using System.Linq;
 using System.Reflection.Emit;
 using System.Text;
@@ -26,6 +27,7 @@ namespace Indiv2
             g = Graphics.FromImage(pictureBox1.Image);
             color = Color.Black;
             pen = new Pen(color);
+            g.SmoothingMode = SmoothingMode.AntiAlias;
         }
         //lowest point
         Point p0 = new Point();
@@ -51,12 +53,13 @@ namespace Indiv2
                 iter++; //increase iteration 
                 pictureBox1.Invalidate();
 
-                if (iter >= 3 && checkBox1.Checked && points.Distinct().Count() != 1) //working only if 3 or more points
+                if (iter >= 3 && checkBox1.Checked && points.Distinct().Count() != 1 && points.Count < 10000) //working only if 3 or more points
                 {
                     G = Graham(points);
                     Draw(G);                   
                 }
             }
+            
         }
 
         private bool IsNewMin(Point e) => iter == 0 || (e.Y > p0.Y || (e.Y == p0.Y && e.X > p0.X));
@@ -151,7 +154,7 @@ namespace Indiv2
         private void button2_Click(object sender, EventArgs e)
         {
             points.Clear();
-            //G.Clear();
+            G.Clear();
             g.Clear(pictureBox1.BackColor);
             pictureBox1.Invalidate();
             iter = 0;
@@ -169,7 +172,7 @@ namespace Indiv2
             if (e.Button == MouseButtons.Right && points.Count > 0)
             {
                 MoveInd = points.FindIndex(p => PointIsNear(p, e.Location));
-                IsMouseDown = MoveInd != -1 ? true : false;
+                IsMouseDown = MoveInd != -1;
             }
 
             /*if (e.Button == MouseButtons.Left)
@@ -180,14 +183,10 @@ namespace Indiv2
             }*/
         }
 
-        bool PointIsNear(Point p0, Point e)
-        {
-            return (Math.Abs(p0.X - e.X) < 4 && Math.Abs(p0.Y - e.Y) < 4);
-        }
-
+        bool PointIsNear(Point p0, Point e) => Math.Abs(p0.X - e.X) < 4 && Math.Abs(p0.Y - e.Y) < 4;
+        
         private void pictureBox1_MouseUp(object sender, MouseEventArgs e)
         {
-
             IsMouseDown = false;
             AreaSelect = false;
         }
@@ -196,11 +195,21 @@ namespace Indiv2
         {
             if (IsMouseDown)
             {
-                points[MoveInd] = e.Location;               
-                G = Graham(points);
-                Draw(G);
+                int x = e.X > pictureBox1.Width ? pictureBox1.Width-3 : e.X < 0 ? 0 : e.X;
+                int y = e.Y > pictureBox1.Height ? pictureBox1.Height-3 : e.Y < 0 ? 0 : e.Y;
+                points[MoveInd] = new Point(x, y);
+                if (G.Count !=0)
+                {
+                    G = Graham(points);
+                    Draw(G);
+                }
+                else
+                {
+                    g.Clear(pictureBox1.BackColor);
+                    DrawPoints(points);
+                    pictureBox1.Invalidate();
+                }
                 
-               
 
                 /*if (AreaSelect)
                 {
@@ -226,11 +235,15 @@ namespace Indiv2
                     int xrnd = rand.Next(10, pictureBox1.Width - 10);
                     int yrnd = rand.Next(10, pictureBox1.Height - 10);
                     Point rndPoint = new Point(xrnd, yrnd);
-                    points.Add(rndPoint);
-                    g.FillEllipse(Brushes.Red, rndPoint.X - 3, rndPoint.Y - 3, 6, 6);
+                    if (points.Count < pictureBox1.Width * pictureBox1.Height/10) 
+                    {
+                        points.Add(rndPoint);
+                        g.FillEllipse(Brushes.Red, rndPoint.X - 3, rndPoint.Y - 3, 6, 6);
+                    }
                     //p0 = IsNewMin(rndPoint) ? rndPoint : p0;
                 }
-                PointsCount.Text = (int.Parse(PointsCount.Text) + PlaceCnt).ToString();
+
+                PointsCount.Text = points.Count.ToString();
                 if (checkBox1.Checked && points.Count >= 3)
                 {
                     G = Graham(points);
